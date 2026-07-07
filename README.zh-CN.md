@@ -4,6 +4,12 @@
 
 [English](./README.md)
 
+## 运行效果
+
+![网站运行效果](./public/小柠AI-07-07-2026_09_32_PM.png)
+
+<p align="center"><em>网站运行效果展示</em></p>
+
 ## 技术栈
 
 ### 前端

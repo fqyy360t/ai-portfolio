@@ -4,6 +4,12 @@ A modern personal portfolio website with a complete CMS admin system.
 
 [简体中文](./README.zh-CN.md)
 
+## Preview
+
+![Website Demo](./public/小柠AI-07-07-2026_09_32_PM.png)
+
+<p align="center"><em>Website running demo</em></p>
+
 ## Tech Stack
 
 ### Frontend
