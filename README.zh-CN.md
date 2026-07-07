@@ -73,36 +73,168 @@ website/
 
 ## 安装与运行
 
-### 环境要求
+本项目提供两种运行方式：**脚本启动** 或 **Docker 启动**。
+
+---
+
+### 方式一：脚本启动（开发模式）
+
+此方式在本地直接运行前端和后端服务，适合开发和调试。
+
+#### 环境要求
 - Node.js >= 20
-- pnpm >= 10
+- npm 或 pnpm
 
-### 安装依赖
+#### 快速启动
 
+`scripts/` 目录提供了启动和停止脚本，支持 Windows 和 Linux/macOS：
+
+**Windows：**
 ```bash
-# 安装前端依赖
-pnpm install
+# 启动服务
+scripts\start.bat
 
-# 安装后端依赖
-cd api
-pnpm install
-cd ..
+# 停止服务
+scripts\stop.bat
 ```
 
-### 启动服务
+**Linux / macOS：**
+```bash
+# 启动服务（需先赋予脚本执行权限）
+chmod +x scripts/*.sh
+./scripts/start.sh
+
+# 停止服务
+./scripts/stop.sh
+```
+
+#### 脚本功能说明
+
+启动脚本会自动完成以下操作：
+1. ✅ 检查 Node.js 是否已安装
+2. ✅ 安装前端依赖（如未找到 `node_modules`）
+3. ✅ 安装后端依赖（如未找到 `api/node_modules`）
+4. ✅ 启动后端 API 服务（端口 **3001**）
+5. ✅ 启动前端开发服务器（端口 **5173**）
+
+#### 手动启动
+
+如需手动启动服务：
 
 ```bash
-# 启动后端 API 服务 (端口 3001)
+# 终端 1：启动后端 API 服务 (端口 3001)
 cd api
+npm install
 npm run dev
 
-# 启动前端开发服务器 (端口 5173)
+# 终端 2：启动前端开发服务器 (端口 5173)
+npm install
 npm run dev
 ```
+
+#### 日志查看
+
+使用启动脚本时，日志文件保存在 `logs/` 目录：
+- `logs/api.log` — 后端服务日志
+- `logs/frontend.log` — 前端服务日志
+
+---
+
+### 方式二：Docker 启动（生产模式）
+
+此方式将整个应用运行在 Docker 容器中，适合生产部署或快速预览。
+
+#### 环境要求
+- [Docker](https://www.docker.com/) >= 20.10
+- [Docker Compose](https://docs.docker.com/compose/) >= 2.0
+
+#### 快速启动
+
+```bash
+# 构建并启动所有服务
+docker compose up -d --build
+
+# 查看运行中的容器
+docker compose ps
+
+# 查看日志
+docker compose logs -f
+
+# 停止所有服务
+docker compose down
+```
+
+#### Docker 架构说明
+
+Docker Compose 配置了两个服务：
+
+| 服务 | 容器名 | 端口 | 说明 |
+|------|--------|------|------|
+| `api` | website-api | 3001 | 后端 API 服务 (Express + SQLite) |
+| `frontend` | website-frontend | 80 | 前端静态文件 (Nginx) |
+
+```
+┌─────────────────────────────────────────┐
+│              Docker 网络                  │
+│                                          │
+│  ┌──────────────┐    ┌───────────────┐  │
+│  │   frontend   │    │      api      │  │
+│  │  (Nginx:80)  │───▶│ (Express:3001)│  │
+│  └──────────────┘    └───────────────┘  │
+│         │                     │          │
+│         ▼                     ▼          │
+│    localhost:80        /uploads/*         │
+│                      database.sqlite     │
+└─────────────────────────────────────────┘
+```
+
+#### 数据卷挂载
+
+以下目录/文件会挂载到 `api` 容器中，确保数据持久化：
+- `./uploads` → `/app/uploads` — 上传的图片
+- `./database.sqlite` → `/app/database.sqlite` — SQLite 数据库
+
+#### Docker 常用命令
+
+```bash
+# 仅构建镜像（不启动）
+docker compose build
+
+# 后台启动服务
+docker compose up -d
+
+# 启动服务并实时查看日志
+docker compose up
+
+# 重启某个服务
+docker compose restart api
+
+# 查看资源占用
+docker compose top
+
+# 停止并删除容器
+docker compose down
+
+# 停止并删除容器 + 数据卷（⚠️ 会删除数据）
+docker compose down -v
+```
+
+#### 生产部署注意事项
+
+1. **先构建前端**：运行 `npm run build` 生成 `dist/` 目录
+2. **环境变量**：已配置 `NODE_ENV=production`（在 docker-compose.yml 中）
+3. **反向代理**：Nginx 配置已自动处理 API 代理
+4. **数据备份**：定期备份 `database.sqlite` 和 `uploads/` 目录
+
+---
 
 ### 访问地址
-- 前端网站：http://localhost:5173
-- 后台管理：http://localhost:5173/admin/login
+
+| 页面 | URL |
+|------|-----|
+| 前端网站 | http://localhost:5173（脚本）/ http://localhost（Docker） |
+| 后台管理 | http://localhost:5173/admin/login（脚本）/ http://localhost/admin/login（Docker） |
+| 后端 API | http://localhost:3001 |
 
 ## 数据库
 

@@ -73,36 +73,169 @@ website/
 
 ## Getting Started
 
-### Prerequisites
+There are two ways to run this project: **Script Mode** or **Docker Mode**.
+
+---
+
+### Method 1: Script Mode (Development)
+
+This method runs the frontend and backend services directly on your machine, suitable for development and debugging.
+
+#### Prerequisites
 - Node.js >= 20
-- pnpm >= 10
+- npm or pnpm
 
-### Installation
+#### Quick Start
 
+The `scripts/` directory provides startup and shutdown scripts for both Windows and Linux/macOS:
+
+**Windows:**
 ```bash
-# Install frontend dependencies
-pnpm install
+# Start services
+scripts\start.bat
 
-# Install backend dependencies
-cd api
-pnpm install
-cd ..
+# Stop services
+scripts\stop.bat
 ```
 
-### Running the App
+**Linux / macOS:**
+```bash
+# Start services (make scripts executable first)
+chmod +x scripts/*.sh
+./scripts/start.sh
+
+# Stop services
+./scripts/stop.sh
+```
+
+#### What the Script Does
+
+The startup script automatically handles:
+1. ✅ Checks if Node.js is installed
+2. ✅ Installs frontend dependencies (if `node_modules` not found)
+3. ✅ Installs backend dependencies (if `api/node_modules` not found)
+4. ✅ Starts backend API service on port **3001**
+5. ✅ Starts frontend dev server on port **5173**
+
+#### Manual Start
+
+If you prefer to start services manually:
 
 ```bash
-# Start backend API server (port 3001)
+# Terminal 1: Start backend API server (port 3001)
 cd api
+npm install
 npm run dev
 
-# Start frontend dev server (port 5173)
+# Terminal 2: Start frontend dev server (port 5173)
+npm install
 npm run dev
 ```
+
+#### Logs
+
+When using the startup script, logs are saved to the `logs/` directory:
+- `logs/api.log` — Backend service logs
+- `logs/frontend.log` — Frontend service logs
+
+---
+
+### Method 2: Docker Mode (Production)
+
+This method runs the entire application in Docker containers, suitable for production deployment or quick preview.
+
+#### Prerequisites
+- [Docker](https://www.docker.com/) >= 20.10
+- [Docker Compose](https://docs.docker.com/compose/) >= 2.0
+
+#### Quick Start
+
+```bash
+# Build and start all services
+docker compose up -d --build
+
+# View running containers
+docker compose ps
+
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+#### Docker Architecture
+
+The Docker Compose configuration defines two services:
+
+| Service | Container | Port | Description |
+|---------|-----------|------|-------------|
+| `api` | website-api | 3001 | Backend API server (Express + SQLite) |
+| `frontend` | website-frontend | 80 | Frontend static files (Nginx) |
+
+```
+┌─────────────────────────────────────────┐
+│              Docker Network              │
+│                                          │
+│  ┌──────────────┐    ┌───────────────┐  │
+│  │   frontend   │    │      api      │  │
+│  │  (Nginx:80)  │───▶│ (Express:3001)│  │
+│  └──────────────┘    └───────────────┘  │
+│         │                     │          │
+│         ▼                     ▼          │
+│    localhost:80        /uploads/*         │
+│                      database.sqlite     │
+└─────────────────────────────────────────┘
+```
+
+#### Docker Volumes
+
+The following directories/files are mounted into the `api` container for data persistence:
+- `./uploads` → `/app/uploads` — Uploaded images
+- `./database.sqlite` → `/app/database.sqlite` — SQLite database
+
+#### Docker Commands Reference
+
+```bash
+# Build images only (without starting)
+docker compose build
+
+# Start services in background
+docker compose up -d
+
+# Start services and view logs in real-time
+docker compose up
+
+# Restart a specific service
+docker compose restart api
+
+# View resource usage
+docker compose top
+
+# Stop and remove containers
+docker compose down
+
+# Stop and remove containers + volumes (⚠️ deletes data)
+docker compose down -v
+```
+
+#### Production Deployment Notes
+
+For production use, consider:
+1. **Build frontend first**: Run `npm run build` to generate the `dist/` directory
+2. **Environment variables**: Configure `NODE_ENV=production` (already set in docker-compose.yml)
+3. **Reverse proxy**: The Nginx config handles API proxying automatically
+4. **Data backup**: Regularly backup `database.sqlite` and `uploads/` directory
+
+---
 
 ### Access URLs
-- Frontend: http://localhost:5173
-- Admin Panel: http://localhost:5173/admin/login
+
+| Page | URL |
+|------|-----|
+| Frontend Website | http://localhost:5173 (script) / http://localhost (docker) |
+| Admin Panel | http://localhost:5173/admin/login (script) / http://localhost/admin/login (docker) |
+| Backend API | http://localhost:3001 |
 
 ## Database
 
